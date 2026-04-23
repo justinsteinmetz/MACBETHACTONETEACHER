@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macbeth — Teacher Display</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inconsolata:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0906;--surface:#110f0c;--surface2:#1a1712;--border:#2e2a24;
+    --red:#c0392b;--gold:#b8924a;--muted:#7a7265;--text:#e8e0d4;--text-dim:#a09080;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;line-height:1.6;min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.6;}
+
+  .wrap{max-width:960px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1;}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:28px 0 24px;border-bottom:1px solid var(--border);margin-bottom:32px;gap:16px;flex-wrap:wrap;}
+  .header-title{font-family:'Inconsolata',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);}
+  .header-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+  .btn{font-family:'Inconsolata',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:7px 14px;border-radius:3px;cursor:pointer;transition:all 0.2s;}
+  .btn:hover{border-color:var(--red);color:var(--text);}
+  .btn.primary{background:var(--red);border-color:var(--red);color:white;}
+  .btn.primary:hover{background:#a93226;}
+
+  /* TASK FILTER */
+  .filters{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap;}
+  .filter-btn{font-family:'Inconsolata',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:3px;cursor:pointer;transition:all 0.2s;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--gold);color:var(--gold);}
+
+  /* ANSWER STAGE — big projection display */
+  .stage{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--red);
+    border-radius:4px;
+    padding:36px 40px;
+    margin-bottom:24px;
+    min-height:220px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+
+  .stage-empty{
+    color:var(--muted);
+    font-family:'Inconsolata',monospace;
+    font-size:12px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    text-align:center;
+  }
+
+  .stage-meta{
+    font-family:'Inconsolata',monospace;
+    font-size:10px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--red);
+    margin-bottom:14px;
+  }
+
+  .stage-name{
+    font-family:'Inconsolata',monospace;
+    font-size:13px;
+    color:var(--gold);
+    margin-bottom:10px;
+    letter-spacing:0.1em;
+  }
+
+  .stage-text{
+    font-size:1.5rem;
+    line-height:1.55;
+    color:var(--text);
+  }
+
+  /* Panel answers in stage */
+  .panel-answers{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;}
+  @media(max-width:600px){.panel-answers{grid-template-columns:1fr;}}
+  .panel-ans{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:12px 14px;}
+  .panel-ans-label{font-family:'Inconsolata',monospace;font-size:10px;color:var(--red);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;}
+  .panel-ans-text{font-size:1.1rem;line-height:1.5;color:var(--text);}
+
+  @keyframes slideIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  .slide-in{animation:slideIn 0.45s ease both;}
+
+  /* CONTROLS */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:28px;}
+  .counter{font-family:'Inconsolata',monospace;font-size:12px;color:var(--muted);letter-spacing:0.1em;}
+
+  /* QUEUE — small answer list below stage */
+  .queue-heading{font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .queue{display:flex;flex-direction:column;gap:8px;}
+  .queue-item{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 14px;cursor:pointer;transition:border-color 0.2s;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .queue-item:hover{border-color:var(--gold);}
+  .queue-item.shown{opacity:0.35;}
+  .qi-meta{font-family:'Inconsolata',monospace;font-size:10px;color:var(--red);letter-spacing:0.15em;white-space:nowrap;}
+  .qi-text{font-size:0.95rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:500px;}
+  .qi-name{font-family:'Inconsolata',monospace;font-size:10px;color:var(--gold);}
+
+  .live-dot{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:6px;animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  .clear-btn{font-family:'Inconsolata',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:4px 0;text-decoration:underline;}
+  .clear-btn:hover{color:var(--red);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="header-title">Macbeth · Teacher Display</div>
+    </div>
+    <div class="header-right">
+      <span class="live-dot"></span>
+      <span id="liveCount" style="font-family:'Inconsolata',monospace;font-size:11px;color:var(--muted);">Loading…</span>
+      <button class="btn" onclick="fetchAll()">↻ Refresh</button>
+      <button class="clear-btn" onclick="clearAll()">Clear all answers</button>
+    </div>
+  </header>
+
+  <!-- TASK FILTER -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter(0,this)">All tasks</button>
+    <button class="filter-btn" onclick="setFilter(1,this)">Task 1</button>
+    <button class="filter-btn" onclick="setFilter(2,this)">Task 2</button>
+    <button class="filter-btn" onclick="setFilter(3,this)">Task 3</button>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+    <div class="stage-empty">No answer shown yet — press "Next answer" or click one below</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn primary" onclick="showNext()">Next answer →</button>
+    <button class="btn" onclick="showPrev()">← Previous</button>
+    <button class="btn" onclick="clearStage()">Clear screen</button>
+    <span class="counter" id="counter"></span>
+  </div>
+
+  <!-- QUEUE -->
+  <div class="queue-heading">Submitted answers</div>
+  <div class="queue" id="queue"></div>
+
+</div>
+
+<script>
+  let allAnswers = [];   // [{key, entry, shown}]
+  let filtered = [];
+  let cursor = -1;
+  let activeFilter = 0;
+  let pollInterval;
+
+  async function fetchAll(){
+    try{
+      const result = await window.storage.list('answer:', true);
+      if(!result) return;
+      const keys = result.keys || [];
+
+      // Fetch any new keys we don't already have
+      const existing = new Set(allAnswers.map(a=>a.key));
+      for(const k of keys){
+        if(existing.has(k)) continue;
+        try{
+          const r = await window.storage.get(k, true);
+          if(r){
+            const entry = JSON.parse(r.value);
+            allAnswers.push({key:k, entry, shown:false});
+          }
+        } catch(e){}
+      }
+
+      // Sort by timestamp
+      allAnswers.sort((a,b)=>a.entry.ts - b.entry.ts);
+      applyFilter();
+      renderQueue();
+      document.getElementById('liveCount').textContent =
+        `${allAnswers.length} answer${allAnswers.length!==1?'s':''} received`;
+    } catch(e){
+      document.getElementById('liveCount').textContent = 'Storage error';
+    }
+  }
+
+  function setFilter(task, btn){
+    activeFilter = task;
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    cursor = -1;
+    applyFilter();
+    renderQueue();
+    clearStage();
+  }
+
+  function applyFilter(){
+    filtered = activeFilter===0
+      ? [...allAnswers]
+      : allAnswers.filter(a=>a.entry.task===activeFilter);
+  }
+
+  function showAnswer(idx){
+    if(idx < 0 || idx >= filtered.length) return;
+    cursor = idx;
+    const {entry} = filtered[idx];
+    filtered[idx].shown = true;
+    // Mark in allAnswers too
+    const orig = allAnswers.find(a=>a.key===filtered[idx].key);
+    if(orig) orig.shown = true;
+
+    const stage = document.getElementById('stage');
+    const taskLabel = `Task ${entry.task}`;
+
+    let bodyHtml = '';
+    if(entry.task === 3){
+      // Parse panel format [1] … [2] … etc
+      const lines = entry.text.split('\n');
+      const panelTitles = ['Witches speak','Macbeth internalises','Lady Macbeth reframes','Duncan trusts'];
+      bodyHtml = `<div class="panel-answers">`;
+      lines.forEach((l,i)=>{
+        const text = l.replace(/^\[\d\]\s*/,'');
+        bodyHtml += `<div class="panel-ans"><div class="panel-ans-label">Panel ${i+1} · ${panelTitles[i]||''}</div><div class="panel-ans-text">${esc(text)}</div></div>`;
+      });
+      bodyHtml += `</div>`;
+    } else {
+      bodyHtml = `<div class="stage-text">${esc(entry.text)}</div>`;
+    }
+
+    stage.innerHTML = `
+      <div class="stage-meta slide-in">${taskLabel}</div>
+      <div class="stage-name slide-in" style="animation-delay:0.05s">${esc(entry.name)}</div>
+      ${bodyHtml}
+    `;
+    // Re-trigger animation
+    stage.querySelectorAll('.slide-in').forEach(el=>{
+      el.style.animation='none';
+      void el.offsetWidth;
+      el.style.animation='';
+    });
+
+    renderQueue();
+    document.getElementById('counter').textContent = `${idx+1} of ${filtered.length}`;
+  }
+
+  function showNext(){
+    if(filtered.length===0) return;
+    // Find first unshown after cursor, or wrap
+    let next = filtered.findIndex((a,i)=>i>cursor && !a.shown);
+    if(next===-1) next = filtered.findIndex(a=>!a.shown);
+    if(next===-1) next = (cursor+1) % filtered.length; // all shown, just advance
+    showAnswer(next);
+  }
+
+  function showPrev(){
+    if(filtered.length===0||cursor<=0) return;
+    showAnswer(cursor-1);
+  }
+
+  function clearStage(){
+    cursor = -1;
+    document.getElementById('stage').innerHTML =
+      '<div class="stage-empty">No answer shown yet — press "Next answer" or click one below</div>';
+    document.getElementById('counter').textContent = '';
+  }
+
+  function renderQueue(){
+    const q = document.getElementById('queue');
+    if(filtered.length===0){
+      q.innerHTML='<div style="font-family:\'Inconsolata\',monospace;font-size:11px;color:var(--muted);letter-spacing:0.1em;">No answers yet for this filter.</div>';
+      return;
+    }
+    q.innerHTML = filtered.map((a,i)=>{
+      const preview = a.entry.text.replace(/\n/g,' ').slice(0,80)+(a.entry.text.length>80?'…':'');
+      return `<div class="queue-item${a.shown?' shown':''}" onclick="showAnswer(${i})">
+        <div>
+          <div class="qi-meta">Task ${a.entry.task}</div>
+          <div class="qi-text">${esc(preview)}</div>
+        </div>
+        <div class="qi-name">${esc(a.entry.name)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function clearAll(){
+    if(!confirm('Clear all submitted answers? This cannot be undone.')) return;
+    try{
+      const result = await window.storage.list('answer:', true);
+      if(result && result.keys){
+        for(const k of result.keys){
+          await window.storage.delete(k, true);
+        }
+      }
+      allAnswers = []; filtered = []; cursor = -1;
+      renderQueue(); clearStage();
+      document.getElementById('liveCount').textContent = '0 answers received';
+    } catch(e){ alert('Error clearing: '+e.message); }
+  }
+
+  // Auto-poll every 8 seconds
+  fetchAll();
+  pollInterval = setInterval(fetchAll, 8000);
+</script>
+</body>
+</html>
